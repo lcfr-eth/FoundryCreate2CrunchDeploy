@@ -2,7 +2,8 @@
 
 #### script/getInitHash.s.sol
 
-```import "forge-std/Script.sol";
+```
+import "forge-std/Script.sol";
 import "src/Counter.sol";
 
 /*
@@ -43,10 +44,10 @@ contract getInitHash is Script {
         console.logBytes32(init);
         console.log("Factory Address:", address(this));
     }
-}```
+}
+```
 
 #### script/deployCreate2Crunch.s.sol
-
 ```
 pragma solidity ^0.8.17;
 
