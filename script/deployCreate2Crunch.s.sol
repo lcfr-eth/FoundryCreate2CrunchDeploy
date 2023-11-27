@@ -26,42 +26,16 @@ created: address 0x00000000F3552BB63542D1E03253Dc24AE4F1918
 
 contract deployCreate2 is Script {
 
-    function computeAddress(bytes32 salt, bytes32 creationCodeHash) public view returns (address addr) {
-        address contractAddress = address(this);
-        assembly {
-            let ptr := mload(0x40)
-
-            mstore(add(ptr, 0x40), creationCodeHash)
-            mstore(add(ptr, 0x20), salt)
-            mstore(ptr, contractAddress)
-            let start := add(ptr, 0x0b)
-            mstore8(start, 0xff)
-            addr := keccak256(start, 85)
-        }
-    }
-
     function run() public returns(address created) {
         
         uint256 number   = vm.envUint("NUMBER");
         bytes32 salt     = vm.envBytes32("SALT");      // salt from create2crunch
         address deployTo = vm.envAddress("DEPLOY_TO"); // the should-be deploy address derived from the provided salt
 
-        bytes memory initCode = type(Counter).creationCode;
-
-        // constructor arguments are abi encoded and appended to the initCode
-        bytes memory createCode = abi.encodePacked(initCode, abi.encode(number));
-
-        // prevent deployment if addresses do not match
-        address computed = computeAddress(salt, keccak256(createCode));
-        require(computed == deployTo, "Computed address does not match deployTo address");
-
-        assembly {
-            created := create2(
-                callvalue(),            // initial funding amount
-                add(createCode, 0x20),  // pointer to init code - first 32 bytes are the length of the init code
-                mload(createCode),      // size of init code
-                salt                    // salt for create2 - passed in from env
-            )
+        Counter counter = new Counter{salt: salt}(number);
+        address created = address(counter);
+        if(created != deployTo) {
+            revert("deployed address does not match expected address");
         }
     }
 }
